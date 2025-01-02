@@ -4,7 +4,17 @@ import pandas as pd
 import numpy as np
 from sklearn.preprocessing import LabelEncoder
 import joblib
-from catboost import CatBoostError, Pool
+#from sklearn.ensemble import HistGradientBoostingRegressor
+import xgboost as xgb
+from streamlit_lottie import st_lottie
+import json
+
+def load_lottiefile(filepath: str):
+    with open(filepath, "r") as f:
+        return json.load(f)
+
+# Load the animation
+lottie_animation = load_lottiefile("Animation.json")
 
 st.set_page_config(page_title='Used Car Price Prediction',
                    layout="centered", page_icon='🚗')
@@ -17,28 +27,19 @@ def model_loader(path):
 
 # Load machine learning model
 with st.spinner('🚕🛺🚙🚜🚚🚓🚗🚕 Hold on, the app is loading !! 🚕🛺🚙🚜🚚🚓🚗🚕'):
-    ml_model = model_loader("xgb_model2.pkl")
+    ml_model = model_loader("model_xgb.pkl")
 
 # App title
 st.markdown("<h2 style='text-align: center;'>🚗 Used Car Price Prediction™ 🚗</h2>", unsafe_allow_html=True)
 
 with st.sidebar:
-    st.sidebar.markdown("# :rainbow[Select an option to filter:]")
+    st.sidebar.markdown("**Select an option to filter:-**")
     selected = st.selectbox("**Menu**", ("Home","prediction"))
 
 if selected=="Home":   
-    st.markdown('## :green[welcome to Home page:]')
-    st.markdown('## :blue[Project Title:]')
-    st.subheader("&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;CarDekho Used Car Price Prediction ")
-    st.markdown('## :blue[Skills takes away From This project:]')
-    st.subheader("&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; Data Cleaning, Exploratory Data Analysis (EDA), Visualization and Machine Learning")
-    st.markdown('## :blue[Domain:]')
-    st.subheader("&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; Automobile")
-    st.markdown('## :blue[Problem:]')
-    st.subheader("&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&nbsp; The primary objective of is project is to create a data science solution for the car")
-    st.subheader('for predicting used car prices accurately by analyzing a diverse dataset including car model,')
-    st.subheader('no. of owners, age, mileage, fuel type, kilometers driven, features and location. The aim is ')
-    st.subheader('to build a machine learning model that offers users to find current valuations for used cars.')
+    #st.markdown('## :green[welcome to Home page:]')
+    # Display Animation
+    st_lottie(lottie_animation, height=425, key="home_animation")
 
 if selected=='prediction':
     st.markdown('## :green[welcome to Prediction values:]')
@@ -99,17 +100,16 @@ if selected=='prediction':
         city = st.selectbox('City', ['Delhi', 'Mumbai', 'Bangalore', 'Chennai', 'Kolkata', 'Hyderabad'])
         city_mapping = {'Delhi': 0, 'Mumbai': 1, 'Bangalore': 2, 'Chennai': 3, 'Kolkata': 4, 'Hyderabad': 5}
         city_encoded = city_mapping[city]
-
+        
     # Prepare the feature array
     input_features = np.array([[encoded_selected_brand, encoded_selected_model, year, fuel_type_encoded, 
                                 transmission_encoded, city_encoded, owner_encoded, km_driven]])
 
     if st.button('Predict'):
         try:
-            # Create a Pool object with the input features
-            input_pool = Pool(data=input_features)
             # Make the prediction
-            prediction = ml_model.predict(input_pool)
+            prediction = ml_model.predict(input_features)
             st.success(f"The predicted price of the car is ₹ {prediction[0]:,.2f}")
-        except CatBoostError as e:
+        except Exception as e:
             st.error(f"Model encountered an error: {str(e)}")
+
